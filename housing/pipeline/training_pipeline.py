@@ -3,13 +3,14 @@ import pandas as pd
 import numpy as np
 from housing.constant import *
 from housing.logger import logging
-from housing.entity.config_entity import DataIngestionConfig
-from housing.entity.artifact_entity import DataIngestionArtifact
+from housing.entity.config_entity import DataIngestionConfig, DataValidationConfig
+from housing.entity.artifact_entity import DataIngestionArtifact, DataValidationArtifact
 from housing.exception import HousingException
 from datetime import date
 from collections import namedtuple
 from housing.config.configuration import Configuration
 from housing.components.data_ingestion import DataIngestion
+from housing.components.data_validation import DataValidation
 
 class TrainingPipeline():
     def __init__(self, config: Configuration = Configuration())->None:
@@ -25,11 +26,21 @@ class TrainingPipeline():
         except Exception as e:
             raise HousingException(e,sys) from e  
         
-    
+    def start_data_validation(self, data_ingestion_artifact: DataIngestionArtifact) -> DataValidationArtifact:
+        try:
+            data_validation = DataValidation(
+                data_validation_config = self.config.get_data_validation_config(), 
+                data_ingestion_artifact = data_ingestion_artifact
+            )
+            return data_validation.initiate_data_validation()
+        except Exception as e:
+            raise HousingException(e, sys) from e  
         
     def run_pipeline(self):
         try:
             # Data Ingestion
             data_ingestion_artifact = self.start_data_ingestion()
+
+            data_validation_artifatc = self.start_data_validation(data_ingestion_artifact=data_ingestion_artifact)
         except Exception as e:
             raise HousingException(e,sys) from e  
