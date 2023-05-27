@@ -6,6 +6,21 @@ import pandas as pd
 import dill
 from housing.constant import *
 
+def write_yaml_file(file_path: str, data: dict=None):
+    """
+    Writes a YAML file and returns the contents as a dictionary.
+    file_path: str.
+    data: dict.
+    """
+    
+    try:
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        with open(file_path, "w") as yaml_file:
+            if data is not None:
+                yaml.dump(data, yaml_file)
+    except Exception as e:
+        raise HousingException(e,sys) from e
+
 
 def read_yaml_file(file_path:str) -> dict:
     """
@@ -32,6 +47,20 @@ def save_numpy_array_data(file_path: str, array: np.array):
         os.makedirs(dir_path, exist_ok=True)
         with open(file_path, 'wb') as file_obj:
             np.save(file_obj, array)
+    except Exception as e:
+        raise HousingException(e, sys) from e
+
+def load_numpy_array_data(file_path: str) -> np.array:
+    """
+    load numpy array data from file   
+    file_path: str location of file to load
+    return: np.array data loaded
+    """
+    
+    try:
+        with open(file_path, 'rb') as file_obj:
+            
+            return np.load(file_obj)
     except Exception as e:
         raise HousingException(e, sys) from e
 
