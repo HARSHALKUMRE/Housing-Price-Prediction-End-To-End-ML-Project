@@ -2,7 +2,7 @@ import os
 import sys
 from housing.exception import HousingException
 from housing.logger import logging
-from housing.entity.config_entity import DataIngestionConfig, TrainingPipelineConfig, DataValidationConfig, ModelTrainerConfig, DataTransformationConfig
+from housing.entity.config_entity import DataIngestionConfig, TrainingPipelineConfig, DataValidationConfig, ModelTrainerConfig, DataTransformationConfig, ModelEvaluationConfig
 from housing.constant import *
 from housing.utils.main_utils import read_yaml_file 
 
@@ -178,7 +178,35 @@ class Configuration:
         except Exception as e:
             raise HousingException(e, sys) from e
 
-    def get_training_pipeline_config(self)->TrainingPipelineConfig:
+
+    def get_model_evaluation_config(self) -> ModelEvaluationConfig:
+        try:
+            
+            artifact_dir = self.training_pipeline_config.artifact_dir
+            
+            model_evaluation_artifact_dir = os.path.join(
+                artifact_dir,
+                MODEL_EVALUATION_ARTIFACT_DIR,
+            )
+            
+            model_evaluation_config_info = self.config_info[MODEL_EVALUATION_CONFIG_KEY]
+            
+            model_evaluation_file_path = os.path.join(
+                model_evaluation_artifact_dir,
+                model_evaluation_config_info[MODEL_EVALUATION_FILE_NAME_KEY]
+            )
+            
+            model_evaluation_config=ModelEvaluationConfig(
+                model_evaluation_file_path=model_evaluation_file_path,
+                time_stamp=self.time_stamp
+            )
+            
+            logging.info(f"Model Evaluation Config: {model_evaluation_config}")
+            return model_evaluation_config
+        except Exception as e:
+            raise HousingException(e, sys) from e
+
+    def get_training_pipeline_config(self) -> TrainingPipelineConfig:
         try:
             trainig_pipeline_config = self.config_info[TRAINING_PIPELINE_CONFIG_KEY]
             artifact_dir = os.path.join(ROOT_DIR, 

@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 from housing.constant import *
 from housing.logger import logging
-from housing.entity.config_entity import DataIngestionConfig, DataValidationConfig, DataTransformationConfig, ModelTrainerConfig
-from housing.entity.artifact_entity import DataIngestionArtifact, DataValidationArtifact, DataTransformationArtifact, ModelTrainerArtifact
+from housing.entity.config_entity import DataIngestionConfig, DataValidationConfig, DataTransformationConfig, ModelTrainerConfig, ModelEvaluationConfig
+from housing.entity.artifact_entity import DataIngestionArtifact, DataValidationArtifact, DataTransformationArtifact, ModelTrainerArtifact, ModelEvaluationArtifact
 from housing.exception import HousingException
 from datetime import date
 from collections import namedtuple
@@ -13,6 +13,7 @@ from housing.components.data_ingestion import DataIngestion
 from housing.components.data_validation import DataValidation
 from housing.components.data_transformation import DataTransformation
 from housing.components.model_trainer import ModelTrainer
+from housing.components.model_evaluation import ModelEvaluation
 
 class TrainingPipeline():
     def __init__(self, config: Configuration = Configuration())->None:
@@ -60,6 +61,19 @@ class TrainingPipeline():
         except Exception as e:
             raise HousingException(e, sys) from e   
 
+    def start_model_evaluation(self, data_ingestion_artifact: DataIngestionArtifact,
+                               data_validation_artifact: DataValidationArtifact,
+                               model_trainer_artifact: ModelTrainerArtifact) -> ModelEvaluationArtifact:
+        try:
+            model_evaluate = ModelEvaluation(
+                model_evaluation_config=self.config.get_model_evaluation_config(),
+                data_ingestion_artifact=data_ingestion_artifact,
+                data_validation_artifact=data_validation_artifact,
+                model_trainer_artifact=model_trainer_artifact)
+            return model_evaluate.initiate_model_evaluation()
+        except Exception as e:
+            raise HousingException(e, sys) from e
+
     def run_pipeline(self):
         try:
             # Data Ingestion
@@ -74,6 +88,12 @@ class TrainingPipeline():
 
             model_trainer_artifact = self.start_model_trainer(
                 data_transformation_artifact=data_transformation_artifact
+            )
+
+            model_evaluation_artifact = self.start_model_evaluation(
+                data_ingestion_artifact=data_ingestion_artifact,
+                data_validation_artifact=data_validation_artifact,
+                model_trainer_artifact=model_trainer_artifact
             )
         except Exception as e:
             raise HousingException(e,sys) from e  
